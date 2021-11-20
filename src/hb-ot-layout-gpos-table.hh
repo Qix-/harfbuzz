@@ -1356,7 +1356,12 @@ struct PairPosFormat1
 
     hb_ot_apply_context_t::skipping_iterator_t &skippy_iter = c->iter_input;
     skippy_iter.reset (buffer->idx, 1);
-    if (!skippy_iter.next ()) return_trace (false);
+    unsigned unsafe_to;
+    if (!skippy_iter.next (&unsafe_to))
+    {
+      buffer->unsafe_to_concat (buffer->idx, unsafe_to);
+      return_trace (false);
+    }
 
     return_trace ((this+pairSet[index]).apply (c, valueFormat, skippy_iter.idx));
   }
@@ -1549,7 +1554,12 @@ struct PairPosFormat2
 
     hb_ot_apply_context_t::skipping_iterator_t &skippy_iter = c->iter_input;
     skippy_iter.reset (buffer->idx, 1);
-    if (!skippy_iter.next ()) return_trace (false);
+    unsigned unsafe_to;
+    if (!skippy_iter.next (&unsafe_to))
+    {
+      buffer->unsafe_to_concat (buffer->idx, unsafe_to);
+      return_trace (false);
+    }
 
     unsigned int len1 = valueFormat1.get_len ();
     unsigned int len2 = valueFormat2.get_len ();
@@ -1793,7 +1803,12 @@ struct CursivePosFormat1
 
     hb_ot_apply_context_t::skipping_iterator_t &skippy_iter = c->iter_input;
     skippy_iter.reset (buffer->idx, 1);
-    if (!skippy_iter.prev ()) return_trace (false);
+    unsigned unsafe_from;
+    if (!skippy_iter.prev (&unsafe_from))
+    {
+      buffer->unsafe_to_concat_from_outbuffer (unsafe_from, buffer->idx);
+      return_trace (false);
+    }
 
     const EntryExitRecord &prev_record = entryExitRecord[(this+coverage).get_coverage  (buffer->info[skippy_iter.idx].codepoint)];
     if (!prev_record.exitAnchor) return_trace (false);
@@ -2060,7 +2075,13 @@ struct MarkBasePosFormat1
     skippy_iter.reset (buffer->idx, 1);
     skippy_iter.set_lookup_props (LookupFlag::IgnoreMarks);
     do {
-      if (!skippy_iter.prev ()) return_trace (false);
+      unsigned unsafe_from;
+      if (!skippy_iter.prev (&unsafe_from))
+      {
+	buffer->unsafe_to_concat_from_outbuffer (unsafe_from, buffer->idx);
+	return_trace (false);
+      }
+
       /* We only want to attach to the first of a MultipleSubst sequence.
        * https://github.com/harfbuzz/harfbuzz/issues/740
        * Reject others...
@@ -2314,7 +2335,12 @@ struct MarkLigPosFormat1
     hb_ot_apply_context_t::skipping_iterator_t &skippy_iter = c->iter_input;
     skippy_iter.reset (buffer->idx, 1);
     skippy_iter.set_lookup_props (LookupFlag::IgnoreMarks);
-    if (!skippy_iter.prev ()) return_trace (false);
+    unsigned unsafe_from;
+    if (!skippy_iter.prev (&unsafe_from))
+    {
+      buffer->unsafe_to_concat_from_outbuffer (unsafe_from, buffer->idx);
+      return_trace (false);
+    }
 
     /* Checking that matched glyph is actually a ligature by GDEF is too strong; disabled */
     //if (!_hb_glyph_info_is_ligature (&buffer->info[skippy_iter.idx])) { return_trace (false); }
@@ -2511,7 +2537,12 @@ struct MarkMarkPosFormat1
     hb_ot_apply_context_t::skipping_iterator_t &skippy_iter = c->iter_input;
     skippy_iter.reset (buffer->idx, 1);
     skippy_iter.set_lookup_props (c->lookup_props & ~LookupFlag::IgnoreFlags);
-    if (!skippy_iter.prev ()) return_trace (false);
+    unsigned unsafe_from;
+    if (!skippy_iter.prev (&unsafe_from))
+    {
+      buffer->unsafe_to_concat_from_outbuffer (unsafe_from, buffer->idx);
+      return_trace (false);
+    }
 
     if (!_hb_glyph_info_is_mark (&buffer->info[skippy_iter.idx])) { return_trace (false); }
 
