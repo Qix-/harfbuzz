@@ -102,7 +102,7 @@ if (${HAVE_STDBOOL_H})
   add_definitions(-DHAVE_STDBOOL_H)
 endif ()
 
-if (NOT MSVC)
+if (NOT MSVC AND NOT MINGW)
   set(THREADS_PREFER_PTHREAD_FLAG ON)
   find_package(Threads)
   if (CMAKE_USE_PTHREADS_INIT)
